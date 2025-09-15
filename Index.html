@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur de Cartes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .input-container {
+            margin-bottom: 25px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+        }
+
+        input[type="url"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .convert-btn {
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .google-btn {
+            background: linear-gradient(45deg, #4285f4, #34a853);
+        }
+
+        .apple-btn {
+            background: linear-gradient(45deg, #000, #333);
+        }
+
+        .waze-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .waze-btn.enabled {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .convert-btn:hover:not(.waze-btn:not(.enabled)) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: #ccc;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active {
+            background: #00d4ff;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active::after {
+            left: 27px;
+        }
+
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 12px;
+            color: #1565c0;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            input[type="url"] {
+                padding: 16px;
+                font-size: 16px;
+            }
+            
+            .convert-btn {
+                padding: 16px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Convertisseur de Cartes</h1>
+        
+        <div class="input-container">
+            <input type="url" id="mapLink" placeholder="Collez votre lien de carte ici..." />
+        </div>
+
+        <div class="toggle-container">
+            <span class="toggle-label">Activer Waze</span>
+            <div class="toggle" id="wazeToggle"></div>
+        </div>
+
+        <div class="buttons-container">
+            <button class="convert-btn google-btn" id="googleBtn">
+                📍 Ouvrir dans Google Maps
+            </button>
+            <button class="convert-btn apple-btn" id="appleBtn">
+                🍎 Ouvrir dans Apple Maps
+            </button>
+            <button class="convert-btn waze-btn" id="wazeBtn">
+                🚗 Ouvrir dans Waze
+            </button>
+        </div>
+
+        <div class="info">
+            Collez un lien de Google Maps ou Apple Maps ci-dessus pour le convertir automatiquement
+        </div>
+    </div>
+
+    <script>
+        const mapLinkInput = document.getElementById('mapLink');
+        const googleBtn = document.getElementById('googleBtn');
+        const appleBtn = document.getElementById('appleBtn');
+        const wazeBtn = document.getElementById('wazeBtn');
+        const wazeToggle = document.getElementById('wazeToggle');
+
+        let wazeEnabled = false;
+        let currentCoords = null;
+
+        // Toggle Waze
+        wazeToggle.addEventListener('click', () => {
+            wazeEnabled = !wazeEnabled;
+            wazeToggle.classList.toggle('active');
+            wazeBtn.classList.toggle('enabled');
+            updateButtons();
+        });
+
+        // Extract coordinates from various map links
+        function extractCoordinates(url) {
+            console.log('Analyzing URL:', url);
+            
+            try {
+                // Si c'est juste un lien Google Maps sans coordonnées visibles, on peut quand même essayer
+                if (url.includes('google.com/maps') || url.includes('maps.google')) {
+                    
+                    // Pattern principal: @lat,lng
+                    let match = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                    if (match) {
+                        console.log('Found coordinates with @:', match[1], match[2]);
+                        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+                    }
+
+                    // Pattern place: /place/name/@lat,lng
+                    match = url.match(/\/place\/([^\/]+)\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                    if (match) {
+                        console.log('Found place coordinates:', match[2], match[3]);
+                        return { 
+                            lat: parseFloat(match[2]), 
+                            lng: parseFloat(match[3]), 
+                            name: decodeURIComponent(match[1].replace(/\+/g, ' '))
+                        };
+                    }
+
+                    // Pattern q avec coordonnées: ?q=lat,lng
+                    match = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                    if (match) {
+                        console.log('Found q coordinates:', match[1], match[2]);
+                        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+                    }
+
+                    // Pattern recherche: ?q=texte
+                    match = url.match(/[?&]q=([^&]+)/);
+                    if (match) {
+                        console.log('Found search query:', match[1]);
+                        return { query: decodeURIComponent(match[1].replace(/\+/g, ' ')) };
+                    }
+
+                    // Si c'est un lien Google Maps mais qu'on n'arrive pas à extraire,
+                    // on retourne un objet générique pour permettre la conversion
+                    console.log('Generic Google Maps link detected');
+                    return { query: 'Lieu depuis Google Maps', isGeneric: true };
+                }
+
+                // Apple Maps
+                if (url.includes('maps.apple.com')) {
+                    // Coordonnées Apple Maps: ll=lat,lng
+                    let match = url.match(/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                    if (match) {
+                        console.log('Found Apple Maps coordinates:', match[1], match[2]);
+                        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+                    }
+
+                    // Recherche Apple Maps: q=texte
+                    match = url.match(/[?&]q=([^&]+)/);
+                    if (match) {
+                        console.log('Found Apple Maps query:', match[1]);
+                        return { query: decodeURIComponent(match[1].replace(/\+/g, ' ')) };
+                    }
+
+                    // Lien Apple Maps générique
+                    console.log('Generic Apple Maps link detected');
+                    return { query: 'Lieu depuis Apple Maps', isGeneric: true };
+                }
+
+                console.log('No pattern matched');
+                return null;
+            } catch (e) {
+                console.error('Error extracting coordinates:', e);
+                return null;
+            }
+        }
+
+        // Generate URLs for each platform
+        function generateUrls(coords) {
+            if (!coords) return { googleUrl: null, appleUrl: null, wazeUrl: null };
+
+            let googleAppUrl, googleWebUrl, appleUrl, wazeUrl;
+
+            if (coords.lat && coords.lng) {
+                // URL schemes pour les apps natives avec coordonnées précises
+                googleAppUrl = `comgooglemaps://?daddr=${coords.lat},${coords.lng}&directionsmode=driving`;
+                appleUrl = `maps://?daddr=${coords.lat},${coords.lng}`;
+                wazeUrl = `waze://?ll=${coords.lat},${coords.lng}&navigate=yes`;
+                
+                // Fallback URLs web
+                googleWebUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`;
+                
+                if (coords.name) {
+                    googleAppUrl = `comgooglemaps://?daddr=${encodeURIComponent(coords.name)}&directionsmode=driving`;
+                    appleUrl = `maps://?daddr=${encodeURIComponent(coords.name)}`;
+                    googleWebUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(coords.name)}`;
+                }
+            } else if (coords.query) {
+                // Recherche par texte
+                googleAppUrl = `comgooglemaps://?q=${encodeURIComponent(coords.query)}`;
+                appleUrl = `maps://?q=${encodeURIComponent(coords.query)}`;
+                wazeUrl = `waze://?q=${encodeURIComponent(coords.query)}`;
+                googleWebUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords.query)}`;
+            } else if (coords.isGeneric) {
+                // Lien générique - on ouvre juste les apps principales
+                googleAppUrl = `comgooglemaps://`;
+                appleUrl = `maps://`;
+                wazeUrl = `waze://`;
+                googleWebUrl = `https://www.google.com/maps`;
+            }
+
+            console.log('Generated URLs:', { googleAppUrl, appleUrl, wazeUrl });
+            
+            return { 
+                googleAppUrl, 
+                googleWebUrl, 
+                appleUrl, 
+                wazeUrl 
+            };
+        }
+
+        // Update button states
+        function updateButtons() {
+            const hasCoords = currentCoords !== null;
+            
+            googleBtn.disabled = !hasCoords;
+            appleBtn.disabled = !hasCoords;
+            wazeBtn.disabled = !hasCoords || !wazeEnabled;
+        }
+
+        // Open map with fallback
+        function openMap(appUrl, webUrl) {
+            if (!appUrl && !webUrl) return;
+            
+            // Try to open native app first
+            if (appUrl) {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = appUrl;
+                document.body.appendChild(iframe);
+                
+                // Fallback to web version after delay
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    if (webUrl) {
+                        window.location.href = webUrl;
+                    }
+                }, 1000);
+            } else if (webUrl) {
+                window.location.href = webUrl;
+            }
+        }
+
+        // Handle input changes
+        mapLinkInput.addEventListener('input', () => {
+            const url = mapLinkInput.value.trim();
+            currentCoords = url ? extractCoordinates(url) : null;
+            updateButtons();
+        });
+
+        // Handle button clicks
+        googleBtn.addEventListener('click', () => {
+            if (!currentCoords) return;
+            const urls = generateUrls(currentCoords);
+            openMap(urls.googleAppUrl, urls.googleWebUrl);
+        });
+
+        appleBtn.addEventListener('click', () => {
+            if (!currentCoords) return;
+            const urls = generateUrls(currentCoords);
+            window.location.href = urls.appleUrl;
+        });
+
+        wazeBtn.addEventListener('click', () => {
+            if (!currentCoords || !wazeEnabled) return;
+            const urls = generateUrls(currentCoords);
+            window.location.href = urls.wazeUrl;
+        });
+
+        // Auto-paste functionality
+        mapLinkInput.addEventListener('focus', async () => {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text && (text.includes('maps.google') || text.includes('maps.apple') || text.includes('goo.gl/maps'))) {
+                        if (!mapLinkInput.value) {
+                            mapLinkInput.value = text;
+                            mapLinkInput.dispatchEvent(new Event('input'));
+                        }
+                    }
+                }
+            } catch (e) {
+                // Clipboard access not available
+            }
+        });
+
+        // Initialize
+        updateButtons();
+    </script>
+</body>
+</html>
